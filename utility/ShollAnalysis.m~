@@ -1,0 +1,276 @@
+function f = ShollAnalysis(Intervals,Radii)
+
+%load('Interval0.mat')
+%load('Radii.mat')
+
+% Create  directories where the DATA will be saved
+if exist('ShollAnalysis','file')==7 % If any the folder 'OUTPUTS' already exists, delete it
+    rmdir('ShollAnalysis','s');
+end
+mkdir('ShollAnalysis'); % create a directory where the DATA about each cells will be saved
+
+
+% variables
+R = length(Radii);
+
+% Part1: BI and SRI calculations
+
+% BI stands for Branching Index. For calculating BI values, we need to
+% first count the number of intersections at different radii.
+
+for radius = 1:R
+    number_of_intersections(radius) = size(Intervals{radius});
+end
+
+BI = number_of_intersections(1)*Radii(1);
+for radius = 2:R
+    if number_of_intersections(radius) > number_of_intersections(radius-1)
+        BI = BI + (number_of_intersections(radius)-number_of_intersections(radius-1))*Radii(radius);
+    end
+end
+save('ShollAnalysis/Branching_Index','BI'); % saving the BI value
+
+    
+% SRI: maximum number of intersections divided by the number of primary
+%      dendrites 
+% Schoenen ramification index (RI) is the ratio between number of branches 
+% at the maximum and the number of primary branches, using either sampled 
+% data or the fitted Nm. The number of primary branches can be entered 
+% manually, or drawn from the number of intersections at Starting radius.
+
+Maximum_number_of_intersections = max(number_of_intersections);
+SRI = Maximum_number_of_intersections/number_of_intersections(1);
+save('ShollAnalysis/Schoenen_Ramification_Index','SRI'); % saving the SRI value
+
+
+% Part2: Three main modifications of the Sholl analysis are in use: Linear
+% Method, Semi-log Method, and Log-log Method.
+
+% Linear Sholl Method
+% Formula: log of N/S versus the radius r
+
+Intersections_by_surface_area = zeros(1,R);
+Intersections_by_volume = zeros(1,R);
+Intersections_by_circumference = zeros(1,R);
+Intersections_by_area = zeros(1,R);
+
+log_Intersections_by_surface_area = zeros(1,R);
+log_Intersections_by_volume = zeros(1,R);
+log_Intersections_by_circumference = zeros(1,R);
+log_Intersections_by_area = zeros(1,R);
+
+log_rads = zeros(1,R);
+rads = zeros(1,R);
+
+for radius = 1:R
+    rads(radius) = Radii(radius);
+    log_rads(R) = log10(Radii(radius));
+    S = 4*pi*Radii(radius)^2; % surface area of a sphere
+    V = 4/3*pi*Radii(radius)^3; % volume of a sphere
+    C = 2*pi*Radii(radius); % circumference of a circle
+    A = pi*Radii(radius)^2; % area of a circle
+    Intersections_by_surface_area(radius) = number_of_intersections(radius)/S;
+    Intersections_by_volume(radius) = number_of_intersections(radius)/V;
+    Intersections_by_circumference(radius) = number_of_intersections(radius)/C;
+    Intersections_by_area(radius) = number_of_intersections(radius)/A;
+    log_Intersections_by_surface_area(radius) = log10(number_of_intersections(radius)/S);
+    log_Intersections_by_volume(radius) = log10(number_of_intersections(radius)/V);
+    log_Intersections_by_circumference(radius) = log10(number_of_intersections(radius)/C);
+    log_Intersections_by_area(radius) = log10(number_of_intersections(radius)/A);
+end
+
+[LM_r,LM,~] = regression(rads,number_of_intersections);
+
+[LM_S_r,LM_S,~] = regression(rads,Intersections_by_surface_area);
+LM_S_r = LM_S_r^2;
+[LM_V_r,LM_V,~] = regression(rads,Intersections_by_volume);
+LM_V_r = LM_V_r^2;
+[LM_C_r,LM_C,~] = regression(rads,Intersections_by_circumference);
+LM_C_r = LM_C_r^2;
+[LM_A_r,LM_A,~] = regression(rads,Intersections_by_area);
+LM_A_r = LM_A_r^2;
+
+save('ShollAnalysis/Slope_Linear_Method_by_Surface_Area','LM_S');
+save('ShollAnalysis/Slope_Linear_Method_by_Volume','LM_V');
+save('ShollAnalysis/Slope_Linear_Method_by_Circumference','LM_C');
+save('ShollAnalysis/Slope_Linear_Method_by_Disk_Area','LM_A');
+save('ShollAnalysis/Coefficient_Linear_Method_by_Surface_Area','LM_S_r');
+save('ShollAnalysis/Coefficient_Linear_Method_by_Volume','LM_V_r');
+save('ShollAnalysis/Coefficient_Linear_Method_by_Circumference','LM_C_r');
+save('ShollAnalysis/Coefficient_Linear_Method_by_Disk_Area','LM_A_r');
+
+% figure(1)
+% plot(rads,Intersections_by_surface_area)
+% plotregression(rads,Intersections_by_surface_area)
+% legend('Linear Sholl Method')
+% xlabel('Radius','FontSize',15) % label the x axis and use font 15
+% ylabel('Intersection density by Surface Area','FontSize',15) % label the y axis and use font size 15
+% 
+% figure(2)
+% plot(1:R,Intersections_by_volume)
+% plotregression(rads,Intersections_by_volume)
+% legend('Linear Sholl Method')
+% xlabel('Radius','FontSize',15) % label the x axis and use font 15
+% ylabel('Intersection density by Volume','FontSize',15) % label the y axis and use font size 15
+% 
+% figure(3)
+% plot(1:R,Intersections_by_circumference)
+% plotregression(rads,Intersections_by_circumference)
+% legend('Linear Sholl Method')
+% xlabel('Radius','FontSize',15) % label the x axis and use font 15
+% ylabel('Intersection density by Circumference','FontSize',15) % label the y axis and use font size 15
+% 
+% figure(4)
+% plot(1:R,Intersections_by_area)
+% plotregression(rads,Intersections_by_area)
+% legend('Linear Sholl Method')
+% xlabel('Radius','FontSize',15) % label the x axis and use font 15
+% ylabel('Intersection density by 2D Area','FontSize',15) % label the y axis and use font size 15
+
+
+
+% Semi-log Sholl Method
+% The log of the number of intersections per circle area or circle length, 
+% versus the circle radius.
+% Formula: log(N/S) = -k * r + m.
+
+[SL_S_r,SL_S,~] = regression(rads,log_Intersections_by_surface_area);
+SL_S_r = SL_S_r^2;
+[SL_V_r,SL_V,~] = regression(rads,log_Intersections_by_volume);
+SL_V_r = SL_V_r^2;
+[SL_C_r,SL_C,~] = regression(rads,log_Intersections_by_circumference);
+SL_C_r = SL_C_r^2;
+[SL_A_r,SL_A,~] = regression(rads,log_Intersections_by_area);
+SL_A_r = SL_A_r^2;
+
+save('ShollAnalysis/Slope_Semi-Log_Method_by_Surface_Area','SL_S');
+save('ShollAnalysis/Slope_Semi-Log_Method_by_Volume','SL_V');
+save('ShollAnalysis/Slope_Semi-Log_Method_by_Circumference','SL_C');
+save('ShollAnalysis/Slope_Semi-Log_Method_by_Disk_Area','SL_A');
+save('ShollAnalysis/Coefficient_Semi-Log_Method_by_Surface_Area','SL_C_r');
+save('ShollAnalysis/Coefficient_Semi-Log_Method_by_Volume','SL_V_r');
+save('ShollAnalysis/Coefficient_Semi-Log_Method_by_Circumference','SL_S_r');
+save('ShollAnalysis/Coefficient_Semi-Log_Method_by_Disk_Area','SL_A_r');
+
+% figure(5)
+% plot(1:R,log_Intersections_by_surface_area)
+% plotregression(rads,log_Intersections_by_surface_area)
+% legend('Semi-log Sholl Method')
+% xlabel('Radius','FontSize',15) % label the x axis and use font 15
+% ylabel('Log(Intersection density by Surface Area)','FontSize',15) % label the y axis and use font size 15
+% 
+% figure(6)
+% plot(1:R,log_Intersections_by_volume)
+% plotregression(rads,log_Intersections_by_volume)
+% legend('Semi-log Sholl Method')
+% xlabel('Radius','FontSize',15) % label the x axis and use font 15
+% ylabel('Log(Intersection density by Volume)','FontSize',15) % label the y axis and use font size 15
+% 
+% figure(7)
+% plot(rads,log_Intersections_by_circumference)
+% plotregression(rads,log_Intersections_by_circumference)
+% legend('Semi-log Sholl Method')
+% xlabel('Radius','FontSize',15) % label the x axis and use font 15
+% ylabel('Log(Intersection density by Circumference)','FontSize',15) % label the y axis and use font size 15
+% 
+% figure(8)
+% plot(1:R,log_Intersections_by_area)
+% plotregression(rads,log_Intersections_by_area)
+% legend('Semi-log Sholl Method')
+% xlabel('Radius','FontSize',15) % label the x axis and use font 15
+% ylabel('Log(Intersection density by 2D Area)','FontSize',15) % label the y axis and use font size 15
+
+
+% Log-log Sholl Method
+% The log of the number of intersections per circle area or circle length,
+% versus log of the circle radius.
+% Formula: log(N/S) = -k * log(r) + m 
+
+[LL_S_r,LL_S,~] = regression(log_rads,log_Intersections_by_surface_area);
+LL_S_r = LL_S_r^2;
+[LL_V_r,LL_V,~] = regression(log_rads,log_Intersections_by_volume);
+LL_V_r = LL_V_r^2;
+[LL_C_r,LL_C,~] = regression(log_rads,log_Intersections_by_circumference);
+LL_C_r = LL_C_r^2;
+[LL_A_r,LL_A,~] = regression(log_rads,log_Intersections_by_area);
+LL_A_r = LL_A_r^2;
+
+save('ShollAnalysis/Slope_Log-Log_Method_by_Surface_Area','LL_S');
+save('ShollAnalysis/Slope_Log-Log_Method_by_Volume','LL_V');
+save('ShollAnalysis/Slope_Log-Log_Method_by_Circumference','LL_C');
+save('ShollAnalysis/Slope_Log-Log_Method_by_Disk_Area','LL_A');
+save('ShollAnalysis/Coefficient_Log-Log_Method_by_Surface_Area','LL_S_r');
+save('ShollAnalysis/Coefficient_Log-Log_Method_by_Volume','LL_V_r');
+save('ShollAnalysis/Coefficient_Log-Log_Method_by_Circumference','LL_C_r');
+save('ShollAnalysis/Coefficient_Log-Log_Method_by_Disk_Area','LL_A_r');
+
+% figure(9)
+% plot(log_rads,log_Intersections_by_surface_area)
+% plotregression(log_rads,log_Intersections_by_surface_area)
+% legend('Log-log Sholl Method')
+% xlabel('Log(Radius)','FontSize',15) % label the x axis and use font 15
+% ylabel('Log(Intersection density by Surface Area)','FontSize',15) % label the y axis and use font size 15
+% 
+% figure(10)
+% plot(log_rads,log_Intersections_by_volume)
+% plotregression(log_rads,log_Intersections_by_volume)
+% legend('Log-log Sholl Method')
+% xlabel('Log(Radius)','FontSize',15) % label the x axis and use font 15
+% ylabel('Log(Intersection density by Volume)','FontSize',15) % label the y axis and use font size 15
+% 
+% figure(11)
+% plot(log_rads,log_Intersections_by_circumference)
+% plotregression(log_rads,log_Intersections_by_circumference)
+% legend('Log-log Sholl Method')
+% xlabel('Log(Radius)','FontSize',15) % label the x axis and use font 15
+% ylabel('Log(Intersection density by Circumference)','FontSize',15) % label the y axis and use font size 15
+% 
+% figure(12)
+% plot(log_rads,log_Intersections_by_area)
+% plotregression(log_rads,log_Intersections_by_area)
+% legend('Log-log Sholl Method')
+% xlabel('Log(Radius)','FontSize',15) % label the x axis and use font 15
+% ylabel('Log(Intersection density by 2D Area)','FontSize',15) % label the y axis and use font size 15
+
+figure(13)
+plot(rads/20,number_of_intersections)
+plotregression(rads/20,number_of_intersections)
+legend('Sholl Method')
+xlabel('Radius','FontSize',15)
+ylabel('Number of Intersections','FontSize',15)
+print(strcat('OUTPUTS\CELLS\','Cell#',num2str(k),'_',filename,'\Homology\Barcodes\','Barcode_', num2str(t)),'-dpdf');   % saving the barcodes in the corresponding folder of the cooresponding cell 
+close;
+
+% The Sholl regression coefficient 'k'
+% 'Shortly, the coefficient k measures the change in dendritic density with 
+% the distance r from the cell's perikaryon.' --- copied from the article
+
+%f = [BI,SRI,LM_S]
+
+% disp('BI = '),disp(BI)
+% disp('SRI = '), disp(SRI)
+% disp('LM_S = '),disp(LM_S)
+% disp('LM_S_r = '), disp(LM_S_r)
+% disp('LM_V = '),disp(LM_V)
+% disp('LM_V_r = '), disp(LM_V_r)
+% disp('LM_C = '),disp(LM_S)
+% disp('LM_C_r = '), disp(LM_S_r)
+% disp('LM_A = '),disp(LM_V)
+% disp('LM_A_r = '), disp(LM_V_r)
+% disp('SL_S = '),disp(SL_S)
+% disp('SL_S_r = '), disp(SL_S_r)
+% disp('SL_V = '),disp(SL_V)
+% disp('SL_V_r = '), disp(SL_V_r)
+% disp('SL_C = '),disp(SL_S)
+% disp('SL_C_r = '), disp(SL_S_r)
+% disp('SL_A = '),disp(SL_V)
+% disp('SL_A_r = '), disp(SL_V_r)
+% disp('LL_S = '),disp(LL_S)
+% disp('LL_S_r = '), disp(LL_S_r)
+% disp('LL_V = '),disp(LL_V)
+% disp('LL_V_r = '), disp(LM_V_r)
+% disp('LL_C = '),disp(LL_S)
+% disp('LL_C_r = '), disp(LL_S_r)
+% disp('LL_A = '),disp(LL_V)
+% disp('LL_A_r = '), disp(LM_V_r)
+% disp('FINISHED!')
