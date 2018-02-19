@@ -1,2 +1,2 @@
 # Persistent_Homology_Neuron
-Compute Persistent Homology of Neurons
+Update of Persistent-Homology-Neuron
