@@ -1,9 +1,8 @@
 # Persistent_Homology_Neuron
 Independent Research with the Mathematics Department at Lafayette College.
-I had worked with a professor along this project (Summer 2017-Spring 2018).<br>
-I presented this research at the LVAIC poster Symposium at Moravian College, PA on November 2017.
+I had worked with a professor along this project (Summer 2017-Spring 2018).
 
-
+I presented this research at the LVAIC poster Symposium at Moravian College, PA on November 2017.<br> The following is the context of my abstract for the poster presentation.<br>
 TITLE: Using Persistent Homology to study Neuron’s morphology
 <br><br>
 ABSTRACT:<br>
